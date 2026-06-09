@@ -1,0 +1,289 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% load static %}
+<div class="title-page">
+  <div class="title-card">
+    <!-- <div class="title-sub">対戦型ボードゲーム</div> -->
+
+    <!-- <h1 class="game-title">Shogi Override</h1> -->
+    <p>
+    <img src="{% static 'images/favicon.png' %}" class="startrogo">
+    </p>
+
+    <div class="title-buttons">
+      <button id="offlineStartBtn" class="title-btn play-btn" type="button">オフライン対戦</button>
+      <button id="onlineCreateBtn" class="title-btn play-btn online-btn" type="button">オンライン部屋作成</button>
+      <button id="onlineMatchBtn" class="title-btn play-btn online-match-btn" type="button">オンライン対戦</button>
+      <button id="ruleBtn" class="title-btn rule-btn js-open-rule" type="button">ルール説明</button>
+    </div>
+
+    <form class="join-room-form" action="{% url 'join_room' %}" method="get">
+      <label for="roomInput">オンライン部屋に参加</label>
+      <div class="join-room-row">
+        <input id="roomInput" name="room" type="text" placeholder="ルームIDを入力" maxlength="12" required>
+        <button type="submit">参加</button>
+      </div>
+      <p class="join-room-help">部屋作成側の画面に表示されるルームIDを入力してください。</p>
+    </form>
+  </div>
+</div>
+
+<div id="sideSelectOverlay" class="rule-modal hidden">
+  <div class="side-select-box">
+    <h2 id="sideSelectTitle">対戦設定</h2>
+    <p id="sideSelectMessage" class="side-select-message">
+      一手ごとの持ち時間を選択してください。
+    </p>
+
+    <div id="sideButtonsArea" class="side-select-buttons">
+      <button type="button" class="side-select-btn" data-side="black">先手</button>
+      <button type="button" class="side-select-btn" data-side="white">後手</button>
+      <button type="button" class="side-select-btn" data-side="random">ランダム</button>
+    </div>
+
+    <div id="timeSelectArea" class="time-select-area">
+      <label for="timeLimitSelect">一手ごとの持ち時間</label>
+      <select id="timeLimitSelect" class="time-limit-select">
+        <option value="none">無制限</option>
+        <option value="10">10秒</option>
+        <option value="20">20秒</option>
+        <option value="30">30秒</option>
+        <option value="40">40秒</option>
+        <option value="50">50秒</option>
+        <option value="60">60秒</option>
+        <option value="70">70秒</option>
+        <option value="80">80秒</option>
+        <option value="90" selected>90秒</option>
+        <option value="100">100秒</option>
+        <option value="110">110秒</option>
+        <option value="120">120秒</option>
+      </select>
+    </div>
+
+    <div class="side-select-actions">
+      <button id="closeSideSelectBtn" class="side-action-btn side-close-btn" type="button">閉じる</button>
+      <button id="confirmSideSelectBtn" class="side-action-btn side-confirm-btn" type="button">開始</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* 対戦設定モーダル専用: style.css の重複/キャッシュに左右されない強制指定 */
+  #sideSelectOverlay .side-select-buttons {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex-wrap: wrap !important;
+    margin: 22px 0 !important;
+  }
+
+  #sideSelectOverlay .side-select-btn {
+    min-width: 128px !important;
+    padding: 12px 24px !important;
+    border: 3px solid #6b421f !important;
+    border-radius: 999px !important;
+    background: #6b421f !important;
+    color: #f8e7b0 !important;
+    font-size: 1.05rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.04em !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18) !important;
+    transition: 0.15s ease !important;
+  }
+
+  #sideSelectOverlay .side-select-btn:hover {
+    background: #3a2412 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+  }
+
+  #sideSelectOverlay .side-select-btn.selected,
+  #sideSelectOverlay .side-select-btn[aria-pressed="true"] {
+    background: #0d6efd !important;
+    color: #ffffff !important;
+    border-color: #ffcc33 !important;
+    box-shadow: 0 0 0 4px rgba(255,204,51,0.85), 0 8px 18px rgba(0,0,0,0.28) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  #sideSelectOverlay .side-select-actions {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin-top: 24px !important;
+    flex-wrap: wrap !important;
+  }
+
+  #sideSelectOverlay .side-action-btn,
+  #sideSelectOverlay .side-close-btn,
+  #sideSelectOverlay .side-confirm-btn {
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 132px !important;
+    min-height: 46px !important;
+    margin: 0 !important;
+    padding: 10px 32px !important;
+    border: none !important;
+    border-radius: 999px !important;
+    background: #6b421f !important;
+    color: #f8e7b0 !important;
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.04em !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18) !important;
+    transition: 0.15s ease !important;
+  }
+
+  #sideSelectOverlay .side-action-btn:hover,
+  #sideSelectOverlay .side-close-btn:hover,
+  #sideSelectOverlay .side-confirm-btn:hover {
+    background: #3a2412 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const offlineStartBtn = document.getElementById("offlineStartBtn");
+    const onlineCreateBtn = document.getElementById("onlineCreateBtn");
+    const onlineMatchBtn = document.getElementById("onlineMatchBtn");
+    const sideSelectOverlay = document.getElementById("sideSelectOverlay");
+    const closeSideSelectBtn = document.getElementById("closeSideSelectBtn");
+    const confirmSideSelectBtn = document.getElementById("confirmSideSelectBtn");
+    const sideButtons = document.querySelectorAll(".side-select-btn");
+    const sideButtonsArea = document.getElementById("sideButtonsArea");
+    const sideSelectTitle = document.getElementById("sideSelectTitle");
+    const sideSelectMessage = document.getElementById("sideSelectMessage");
+    const timeLimitSelect = document.getElementById("timeLimitSelect");
+
+    let selectedMode = "offline";
+    let selectedSide = "black";
+
+    function updateSideButtonState() {
+      sideButtons.forEach((button) => {
+        const isSelected = button.dataset.side === selectedSide;
+        button.classList.toggle("selected", isSelected);
+        button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+
+        // CSSキャッシュや既存CSSの上書きが残っていても見た目が変わるように保険で直接指定
+        if (isSelected) {
+          button.style.background = "#0d6efd";
+          button.style.color = "#ffffff";
+          button.style.borderColor = "#ffcc33";
+          button.style.boxShadow = "0 0 0 4px rgba(255,204,51,0.85), 0 8px 18px rgba(0,0,0,0.28)";
+        } else {
+          button.style.background = "#6b421f";
+          button.style.color = "#f8e7b0";
+          button.style.borderColor = "#6b421f";
+          button.style.boxShadow = "0 4px 10px rgba(0,0,0,0.18)";
+        }
+      });
+    }
+
+    function openSideSelect(mode) {
+      selectedMode = mode;
+      selectedSide = "black";
+      updateSideButtonState();
+
+      if (mode === "online") {
+        sideSelectTitle.textContent = "オンライン部屋作成の設定";
+        sideSelectMessage.textContent = "部屋作成者の手番と、一手ごとの持ち時間を選択してください。参加者は自動的に反対側になります。";
+        if (sideButtonsArea) sideButtonsArea.style.display = "flex";
+        if (confirmSideSelectBtn) confirmSideSelectBtn.textContent = "部屋作成";
+      } else {
+        sideSelectTitle.textContent = "オフライン対戦の設定";
+        sideSelectMessage.textContent = "オフライン対戦は常に先行から開始します。一手ごとの持ち時間を選択してください。";
+        if (sideButtonsArea) sideButtonsArea.style.display = "none";
+        if (confirmSideSelectBtn) confirmSideSelectBtn.textContent = "開始";
+      }
+
+      sideSelectOverlay.classList.remove("hidden");
+    }
+
+    function closeSideSelect() {
+      sideSelectOverlay.classList.add("hidden");
+    }
+
+    function selectedTimeLimit() {
+      return timeLimitSelect ? timeLimitSelect.value : "none";
+    }
+
+    function confirmSideSelect() {
+      const timeLimit = selectedTimeLimit();
+
+      if (selectedMode === "online") {
+        window.location.href = `{% url 'create_room' %}?side=${encodeURIComponent(selectedSide)}&time_limit=${encodeURIComponent(timeLimit)}`;
+      } else {
+        window.location.href = `{% url 'index' %}?side=black&time_limit=${encodeURIComponent(timeLimit)}`;
+      }
+    }
+
+    async function startRandomMatch() {
+      const res = await fetch("{% url 'random_match' %}", { method: "POST" });
+      const data = await res.json();
+
+      if (res.status === 401 || data.login_required) {
+        window.location.href = "{% url 'login_page' %}";
+        return;
+      }
+
+      if (!data.ok) {
+        alert(data.error || "マッチングに失敗しました。");
+        return;
+      }
+
+      window.location.href = data.redirect;
+    }
+
+    if (offlineStartBtn) {
+      offlineStartBtn.addEventListener("click", () => openSideSelect("offline"));
+    }
+
+    if (onlineCreateBtn) {
+      onlineCreateBtn.addEventListener("click", () => {
+        const isLoggedIn = {{ request.user.is_authenticated|yesno:"true,false" }};
+        if (!isLoggedIn) {
+          window.location.href = "{% url 'login_page' %}";
+          return;
+        }
+        openSideSelect("online");
+      });
+    }
+
+    if (onlineMatchBtn) {
+      onlineMatchBtn.addEventListener("click", startRandomMatch);
+    }
+
+    if (closeSideSelectBtn) {
+      closeSideSelectBtn.addEventListener("click", closeSideSelect);
+    }
+
+    if (confirmSideSelectBtn) {
+      confirmSideSelectBtn.addEventListener("click", confirmSideSelect);
+    }
+
+    if (sideSelectOverlay) {
+      sideSelectOverlay.addEventListener("click", (e) => {
+        if (e.target === sideSelectOverlay) closeSideSelect();
+      });
+    }
+
+    sideButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedSide = button.dataset.side;
+        updateSideButtonState();
+      });
+    });
+  });
+</script>
+{% endblock %}

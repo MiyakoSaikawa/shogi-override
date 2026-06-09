@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+        crossorigin="anonymous">
+
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="icon" href="{% static 'images/favicon.ico' %}" sizes="any">
+  <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon-180x180.png' %}" sizes="180x180">
+  <link rel="icon" type="image/png" href="{% static 'images/android-chrome-192x192.png' %}" sizes="192x192">
+
+  <title>Shogi Override</title>
+</head>
+<body>
+  {% with current_page=request.resolver_match.url_name %}
+  <nav class="navbar navbar-expand-lg shogi-navbar">
+    <div class="container-fluid">
+      <a class="navbar-brand shogi-brand" href="{% url 'title' %}" id="navTitleLink">乱棋</a>
+
+      <button class="mobile-menu-toggle"
+              id="mobileMenuBtn"
+              type="button"
+              aria-label="メニューを開く"
+              aria-controls="mobileNavMenu"
+              aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="collapse navbar-collapse desktop-nav" id="navbarNavAltMarkup">
+        <div class="navbar-nav ms-auto align-items-lg-center">
+          {% if current_page == "title" or current_page == "login_page" or current_page == "register_page" %}
+            <a class="nav-link" href="{% url 'title' %}">タイトル</a>
+            <a class="nav-link js-open-rule" href="#">ルール説明</a>
+
+            {% if user.is_authenticated %}
+              <span class="nav-link nav-user-name">{{ user.username }}</span>
+              <form action="{% url 'logout_user' %}" method="post" class="nav-logout-form" id="logoutForm">
+                {% csrf_token %}
+                <button type="button" class="nav-link nav-logout-btn" id="logoutBtn">ログアウト</button>
+              </form>
+            {% else %}
+              <a class="nav-link" href="{% url 'login_page' %}">ログイン</a>
+            {% endif %}
+          {% else %}
+            <a class="nav-link js-open-rule" href="#">ルール説明</a>
+            <form action="{% url 'logout_user' %}" method="post" class="nav-logout-form" id="logoutForm" style="display:none;">
+              {% csrf_token %}
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div id="mobileNavOverlay" class="mobile-nav-overlay hidden" aria-hidden="true">
+    <div class="mobile-nav-backdrop" data-mobile-close></div>
+    <div class="mobile-nav-panel" id="mobileNavMenu" role="dialog" aria-modal="true" aria-label="モバイルメニュー">
+      <div class="mobile-nav-header">
+        <div class="mobile-nav-title">Shogi Override</div>
+        <button type="button" class="mobile-nav-close" id="mobileMenuCloseBtn" aria-label="メニューを閉じる">×</button>
+      </div>
+
+      <div class="mobile-nav-links">
+        <a class="mobile-nav-link" href="{% url 'title' %}">タイトル</a>
+
+        {% if current_page == "title" or current_page == "login_page" or current_page == "register_page" %}
+          {% if user.is_authenticated %}
+            <div class="mobile-nav-user">{{ user.username }} でログイン中</div>
+            <button type="button" class="mobile-nav-link mobile-nav-button" id="mobileLogoutBtn">ログアウト</button>
+          {% else %}
+            <a class="mobile-nav-link" href="{% url 'login_page' %}">ログイン</a>
+          {% endif %}
+        {% endif %}
+
+        <button type="button" class="mobile-nav-link mobile-nav-button js-open-rule" id="mobileRuleBtn">ルール説明</button>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  <main class="main-content">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <div id="ruleModal" class="rule-modal hidden">
+    <div class="rule-box">
+      <h2>ルール説明</h2>
+      <div class="rule-content">
+        <p>この将棋は、通常の将棋をベースにした特殊ルールの対戦ゲームです。</p>
+        <ul>
+          <li>相手の王将以外の駒は、自分・相手を問わず動かすことができます。</li>
+          <li>どの駒を使っても、王将以外の駒は自分の駒も含めて取ることができます。</li>
+          <li>自分の王将を取ることはできません。</li>
+          <li>相手の王将を動かすことはできません。</li>
+          <li>王将は、現在の手番側の駒でしか取ることができません。</li>
+          <li>取った駒は、取った側の持ち駒になります。</li>
+          <li>取った駒の向きは変わらず、元の所有者の向きのまま持ち駒になります。</li>
+          <li>成った駒を取った場合は、成る前の駒に戻ります。</li>
+          <li>同じ所有者の歩が同じ列に2枚以上並ぶ二歩は禁止です。</li>
+          <li>相手の王将を取ると勝利です。</li>
+          <li>時間内に指さなかった場合、相手の番になります。</li>
+          <li>3回時間内に指さなかった場合、敗北となります。</li>
+        </ul>
+      </div>
+      <button id="closeRuleBtn" class="close-rule-btn" type="button">閉じる</button>
+    </div>
+  </div>
+
+  <div id="logoutConfirmModal"
+       class="logout-overlay hidden"
+       aria-hidden="true"
+       style="display:none; position:fixed; inset:0; width:100vw; height:100vh; background:rgba(30,18,8,0.68); z-index:99999; align-items:center; justify-content:center; padding:24px;">
+    <div class="logout-box"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="logoutConfirmTitle"
+         style="width:min(420px,92vw); padding:32px 28px; background:#fff8e1; border:4px solid #6b421f; border-radius:18px; box-shadow:0 18px 42px rgba(0,0,0,0.42); text-align:center; color:#3a2412;">
+      <h2 id="logoutConfirmTitle" class="logout-title" style="margin:0 0 16px; font-size:1.6rem; font-weight:900;">ログアウト確認</h2>
+      <p class="logout-message" style="margin:0; font-size:1.05rem; font-weight:bold; line-height:1.7;">ログアウトしますか？</p>
+      <div class="logout-actions" style="display:flex; justify-content:center; gap:14px; margin-top:26px; flex-wrap:wrap;">
+        <button id="cancelLogoutBtn" class="logout-cancel-btn" type="button" style="min-width:130px; padding:10px 20px; border-radius:999px; font-size:1rem; font-weight:bold; cursor:pointer; border:2px solid #6b421f; background:#fff8e1; color:#3a2412;">キャンセル</button>
+        <button id="confirmLogoutBtn" class="logout-ok-btn" type="button" style="min-width:130px; padding:10px 20px; border-radius:999px; font-size:1rem; font-weight:bold; cursor:pointer; border:none; background:#6b421f; color:#f8e7b0;">ログアウト</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-MrcW6ZMFY1zcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+          crossorigin="anonymous"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const ruleModal = document.getElementById("ruleModal");
+      const closeRuleBtn = document.getElementById("closeRuleBtn");
+      const logoutForm = document.getElementById("logoutForm");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+      const logoutConfirmModal = document.getElementById("logoutConfirmModal");
+      const cancelLogoutBtn = document.getElementById("cancelLogoutBtn");
+      const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
+      const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      const mobileNavOverlay = document.getElementById("mobileNavOverlay");
+      const mobileMenuCloseBtn = document.getElementById("mobileMenuCloseBtn");
+
+      function openRuleModal(e) {
+        if (e) e.preventDefault();
+        closeMobileMenu();
+        if (ruleModal) ruleModal.classList.remove("hidden");
+      }
+
+      function closeRuleModal() {
+        if (ruleModal) ruleModal.classList.add("hidden");
+      }
+
+      function openMobileMenu(e) {
+        if (e) e.preventDefault();
+        if (!mobileNavOverlay || !mobileMenuBtn) return;
+        mobileNavOverlay.classList.remove("hidden");
+        mobileNavOverlay.setAttribute("aria-hidden", "false");
+        mobileMenuBtn.setAttribute("aria-expanded", "true");
+        document.body.classList.add("mobile-menu-open");
+      }
+
+      function closeMobileMenu() {
+        if (!mobileNavOverlay || !mobileMenuBtn) return;
+        mobileNavOverlay.classList.add("hidden");
+        mobileNavOverlay.setAttribute("aria-hidden", "true");
+        mobileMenuBtn.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("mobile-menu-open");
+      }
+
+      function openLogoutConfirm(e) {
+        if (e) e.preventDefault();
+        closeMobileMenu();
+        if (!logoutConfirmModal) return;
+        logoutConfirmModal.classList.remove("hidden");
+        logoutConfirmModal.style.display = "flex";
+        logoutConfirmModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeLogoutConfirm() {
+        if (!logoutConfirmModal) return;
+        logoutConfirmModal.classList.add("hidden");
+        logoutConfirmModal.style.display = "none";
+        logoutConfirmModal.setAttribute("aria-hidden", "true");
+      }
+
+      function executeLogout() {
+        if (!logoutForm) return;
+        HTMLFormElement.prototype.submit.call(logoutForm);
+      }
+
+      document.querySelectorAll(".js-open-rule").forEach((button) => {
+        button.addEventListener("click", openRuleModal);
+      });
+
+      if (closeRuleBtn) closeRuleBtn.addEventListener("click", closeRuleModal);
+
+      if (ruleModal) {
+        ruleModal.addEventListener("click", (e) => {
+          if (e.target === ruleModal) closeRuleModal();
+        });
+      }
+
+      if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", openMobileMenu);
+      if (mobileMenuCloseBtn) mobileMenuCloseBtn.addEventListener("click", closeMobileMenu);
+      if (mobileNavOverlay) {
+        mobileNavOverlay.addEventListener("click", (e) => {
+          if (e.target && e.target.hasAttribute("data-mobile-close")) closeMobileMenu();
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openLogoutConfirm(e);
+        });
+      }
+
+      if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openLogoutConfirm(e);
+        });
+      }
+
+      if (cancelLogoutBtn) cancelLogoutBtn.addEventListener("click", closeLogoutConfirm);
+      if (confirmLogoutBtn) confirmLogoutBtn.addEventListener("click", executeLogout);
+
+      if (logoutConfirmModal) {
+        logoutConfirmModal.addEventListener("click", (e) => {
+          if (e.target === logoutConfirmModal) closeLogoutConfirm();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

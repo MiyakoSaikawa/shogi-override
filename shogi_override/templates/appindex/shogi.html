@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+{% if online_room %}
+<script>
+  window.SHOGI_CONFIG = {
+    mode: "{{ online_mode|default:'room' }}",
+    room: "{{ online_room }}",
+    player: "{{ online_player }}"
+  };
+</script>
+{% else %}
+<script>
+  window.SHOGI_CONFIG = {
+    mode: "offline",
+    room: "offline",
+    player: null
+  };
+</script>
+{% endif %}
+
+<div id="matchInfo" class="match-info"></div>
+<div id="turnDisplay"></div>
+<div id="timerDisplay" class="timer-display"></div>
+<button id="surrenderBtn" class="surrender-btn" type="button">投了</button>
+
+<div id="game">
+  <div id="container">
+    <div class="handContainer">
+      <div class="handLabel">白の持ち駒</div>
+      <div id="whiteHand" class="hand"></div>
+    </div>
+
+    <table id="board"></table>
+
+    <div class="handContainer">
+      <div class="handLabel">黒の持ち駒</div>
+      <div id="blackHand" class="hand"></div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay" class="overlay hidden">
+  <div class="modal">
+    <div id="resultText"></div>
+    <div class="result-actions">
+      <button id="resetBtn" type="button">リセット</button>
+      <button id="titleBtn" type="button">タイトル</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmOverlay" class="overlay hidden">
+  <div class="modal confirm-modal">
+    <div id="confirmTitle" class="confirm-title"></div>
+    <div id="confirmMessage" class="confirm-message"></div>
+    <div class="result-actions">
+      <button id="confirmCancelBtn" type="button">キャンセル</button>
+      <button id="confirmOkBtn" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'javascript/game.js' %}"></script>
+{% endblock %}

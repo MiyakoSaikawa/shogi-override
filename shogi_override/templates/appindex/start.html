@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% load static %}
+<div class="start-page">
+  <section class="start-card">
+    <p>
+    <img src="{% static 'images/favicon.png' %}" id="navTitleLink" class="startrogo">
+    </p>
+    <p class="start-catch">
+      相手の駒も操る、新たな将棋体験
+    </p>
+
+    <a href="{% url 'title' %}" class="start-button">
+      はじめる
+    </a>
+  </section>
+</div>
+{% endblock %}

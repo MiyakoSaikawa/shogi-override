@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-page">
+  <section class="auth-page-card">
+    <div class="auth-page-icon">将</div>
+    <p class="auth-page-kicker">Create Account</p>
+    <h1>ユーザー新規登録</h1>
+    <p class="auth-page-lead">ユーザー名は英数字のみ、パスワードは8文字以上で設定してください。</p>
+
+    {% if error %}
+      <div class="auth-page-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'register_page' %}" class="auth-page-form" id="registerForm" autocomplete="on">
+      {% csrf_token %}
+
+      <label for="username">ユーザー名</label>
+      <input id="username" name="username" type="text" value="{{ username|default:'' }}" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="latin" pattern="[A-Za-z0-9]+" title="ユーザー名は英数字のみ使用できます。" required>
+      <p class="auth-input-hint">英数字のみ使用できます。</p>
+
+      <label for="password">パスワード</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" title="パスワードは8文字以上で入力してください。" required>
+      <p class="auth-input-hint">8文字以上で入力してください。</p>
+
+      <button type="submit" class="auth-page-submit" id="registerSubmitBtn">登録</button>
+    </form>
+
+    <a href="{% url 'login_page' %}" class="auth-page-secondary">ログインページへ</a>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById("registerForm");
+    const button = document.getElementById("registerSubmitBtn");
+    if (!form || !button) return;
+
+    form.addEventListener("submit", function () {
+      button.disabled = true;
+      button.textContent = "登録中...";
+    });
+  })();
+</script>
+{% endblock %}
