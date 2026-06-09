@@ -1,0 +1,3200 @@
+/* ===== shogi ===== */
+/* ===== 対局エリア ===== */
+#game {
+  display: block;
+}
+
+#container {
+  display: grid;
+  grid-template-columns: 130px 540px 130px;
+  justify-content: center;
+  align-items: start;
+  gap: 24px;
+}
+
+/* ===== 持ち駒エリア ===== */
+.handContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.handLabel {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: #4a2c14;
+  color: #f8e7b0;
+  font-weight: bold;
+  font-size: 0.95rem;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+.hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 130px;
+  height: 500px;
+  overflow-y: auto;
+
+  padding: 10px;
+  gap: 8px;
+
+  background: rgba(255, 248, 225, 0.75);
+  border: 2px solid #8b5a2b;
+  border-radius: 12px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* ===== 将棋盤 ===== */
+#board {
+  width: 540px;
+  height: 540px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: #d9a441;
+  border: 4px solid #4a2c14;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.28);
+}
+
+#board td {
+  width: 60px;
+  height: 60px;
+  border: 1px solid #6f431f;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 選択中 */
+.selected {
+  background: #ffe066 !important;
+}
+
+/* 動ける場所 */
+.valid {
+  background: #b7e4a1 !important;
+}
+
+/* ===== 駒 ===== */
+.piece {
+  width: 64px;
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #5a3518;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fff2bf, #d9a441);
+  color: #2f2418;
+
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  user-select: none;
+}
+
+.piece:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.25);
+}
+
+/* ドラッグ中 */
+.dragging {
+  position: absolute;
+  pointer-events: none;
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 1000;
+
+  padding: 8px 12px;
+  border: 2px solid #5a3518;
+  border-radius: 6px;
+  background: #fff2bf;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+}
+
+/* ===== オーバーレイ ===== */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 1000;
+}
+
+/* 非表示 */
+.hidden {
+  display: none;
+}
+
+/* ===== ポップアップ ===== */
+.modal {
+  position: fixed;
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 35vw;
+  height: 35vh;
+
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 24px;
+
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ボタン */
+.modal button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 18px;
+}
+
+.handContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+}
+
+/* ラベル */
+.handLabel {
+  font-size: 20px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+/* ===== shogi ===== */
+/* ===== layout ===== */
+body {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.8), transparent 40%),
+    linear-gradient(135deg, #f3ead7, #d8b36a);
+  min-height: 100vh;
+  color: #2f2418;
+}
+
+/* ===== ナビゲーション ===== */
+.shogi-navbar {
+  background: linear-gradient(90deg, #3a2412, #6b421f);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.shogi-brand {
+  color: #f8e7b0 !important;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  font-size: 1.4rem;
+}
+
+.shogi-navbar .nav-link {
+  color: #f5deb3 !important;
+  font-weight: 600;
+}
+
+.shogi-navbar .nav-link:hover {
+  color: #ffffff !important;
+}
+
+/* Bootstrapのハンバーガーが見えにくい場合 */
+.navbar-toggler {
+  background-color: #f8e7b0;
+}
+
+/* ===== メイン領域 ===== */
+.main-content {
+  padding: 24px 16px 40px;
+}
+
+/* ===== タイトル ===== */
+h2 {
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  color: #3a2412;
+}
+
+/* ===== 手番表示 ===== */
+#turnDisplay {
+  display: inline-block;
+  margin: 8px 0 20px;
+  padding: 8px 24px;
+  border-radius: 999px;
+  background: #fff8e1;
+  border: 2px solid #8b5a2b;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+
+/* ===== layout ===== */
+/* =====タイトル画面====== */
+
+.title-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.title-card {
+  width: min(720px, 92vw);
+  padding: 48px 40px;
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 247, 215, 0.92), rgba(255, 248, 225, 0.78) 52%, rgba(210, 170, 90, 0.58)),
+    linear-gradient(135deg, rgba(58, 36, 18, 0.14), rgba(255, 255, 255, 0.2));
+  border: 4px solid #6b421f;
+  border-radius: 24px;
+
+  box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  text-align: center;
+}
+
+.title-card::before,
+.title-card::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border: 2px solid rgba(107, 66, 31, 0.14);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.title-card::before {
+  top: -180px;
+  left: -140px;
+}
+
+.title-card::after {
+  right: -150px;
+  bottom: -190px;
+}
+
+.title-sub {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 6px 18px;
+
+  border-radius: 999px;
+  background: #4a2c14;
+  color: #f8e7b0;
+
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.game-title {
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #3a2412;
+  text-shadow: 3px 3px 0 #d9a441;
+}
+
+.game-catch {
+  margin-top: 20px;
+  margin-bottom: 36px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #5a3518;
+}
+
+.title-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.title-btn {
+  min-width: 180px;
+  padding: 14px 28px;
+
+  border: none;
+  border-radius: 999px;
+
+  font-size: 1.15rem;
+  font-weight: bold;
+  text-decoration: none;
+
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.title-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+}
+
+.play-btn {
+  background: #6b421f;
+  color: #f8e7b0;
+}
+
+.play-btn:hover {
+  background: #3a2412;
+  color: #ffffff;
+}
+
+.rule-btn {
+  background: #d9a441;
+  color: #3a2412;
+}
+
+.rule-btn:hover {
+  background: #b8822f;
+}
+
+/* ==============================
+   ルール説明モーダル
+============================== */
+
+.rule-modal {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(30, 18, 8, 0.7);
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+}
+
+.rule-modal.hidden {
+  display: none;
+}
+
+.rule-box {
+  width: min(760px, 94vw);
+  max-height: 82vh;
+  overflow-y: auto;
+
+  background: #fff8e1;
+  border: 4px solid #6b421f;
+  border-radius: 20px;
+
+  padding: 32px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.4);
+
+  color: #3a2412;
+  text-align: left;
+}
+
+.rule-box h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  font-weight: bold;
+  color: #3a2412;
+}
+
+.rule-content p {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.rule-content ul {
+  padding-left: 1.4em;
+  line-height: 1.9;
+}
+
+.rule-content li {
+  margin-bottom: 6px;
+}
+
+.close-rule-btn {
+  display: block;
+  margin: 28px auto 0;
+  padding: 10px 32px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: #6b421f;
+  color: #f8e7b0;
+
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-rule-btn:hover {
+  background: #3a2412;
+}
+
+
+
+/* =====タイトル画面====== */
+
+
+
+/* ===== online/offline title controls ===== */
+.online-btn {
+  background: #4a2c14;
+  color: #f8e7b0;
+}
+
+.online-btn:hover {
+  background: #2f1b0b;
+  color: #ffffff;
+}
+
+.join-room-form {
+  margin: 28px auto 0;
+  padding: 18px;
+  max-width: 520px;
+  border: 2px solid #8b5a2b;
+  border-radius: 16px;
+  background: rgba(255, 248, 225, 0.82);
+}
+
+.join-room-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #3a2412;
+}
+
+.join-room-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.join-room-row input {
+  width: 220px;
+  padding: 10px 12px;
+  border: 2px solid #8b5a2b;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.join-room-row button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #6b421f;
+  color: #f8e7b0;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.join-room-row button:hover {
+  background: #3a2412;
+}
+
+.join-room-help {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: #5a3518;
+}
+
+.match-info {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 248, 225, 0.85);
+  border: 2px solid #8b5a2b;
+  color: #3a2412;
+  font-weight: bold;
+}
+
+
+/* ===== 投了ボタン ===== */
+.surrender-btn {
+  margin: 0 0 18px;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 999px;
+  background: #8b1e1e;
+  color: #fff8e1;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+.surrender-btn:hover {
+  background: #5c1111;
+}
+
+.surrender-btn:disabled {
+  background: #9c8f7a;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* ===== 勝敗ポップアップ内ボタン ===== */
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.modal .result-actions button {
+  margin-top: 0;
+  min-width: 120px;
+}
+
+#titleBtn {
+  background: #d9a441;
+  color: #3a2412;
+}
+
+#titleBtn:hover {
+  background: #b8822f;
+}
+
+/* 投了時の補足メッセージ */
+.result-subtext {
+  display: block;
+  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #6b421f;
+}
+
+/* ===== 確認ポップアップ ===== */
+.confirm-modal {
+  min-height: 240px;
+}
+
+.confirm-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #3a2412;
+  text-align: center;
+}
+
+.confirm-message {
+  margin-top: 14px;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #5a3518;
+  text-align: center;
+  font-weight: bold;
+}
+
+#confirmOkBtn {
+  background: #8b1e1e;
+  color: #fff8e1;
+}
+
+#confirmOkBtn:hover {
+  background: #5c1111;
+}
+
+#confirmCancelBtn {
+  background: #d9a441;
+  color: #3a2412;
+}
+
+#confirmCancelBtn:hover {
+  background: #b8822f;
+}
+
+/* ===== 先手・後手選択ポップアップ ===== */
+.side-select-box {
+  width: min(560px, 92vw);
+  background: #fff8e1;
+  border: 4px solid #6b421f;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.4);
+  color: #3a2412;
+  text-align: center;
+}
+
+.side-select-box h2 {
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #3a2412;
+}
+
+.side-select-message {
+  margin-bottom: 24px;
+  color: #5a3518;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.side-select-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+/* ==============================
+   ログイン・新規登録モーダル
+============================== */
+.auth-box {
+  position: relative;
+  width: min(560px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at top left, rgba(255, 239, 184, 0.95), transparent 38%),
+    linear-gradient(180deg, #fffaf0, #f5dfad);
+  border: 4px solid #6b421f;
+  border-radius: 24px;
+  padding: 34px 34px 28px;
+  box-shadow:
+    0 22px 56px rgba(0,0,0,0.42),
+    inset 0 0 0 2px rgba(255,255,255,0.45);
+  color: #3a2412;
+  text-align: left;
+  animation: authPop 0.22s ease;
+}
+
+@keyframes authPop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #6b421f;
+  border-radius: 50%;
+  background: #fff8e1;
+  color: #3a2412;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+.auth-close-btn:hover {
+  background: #6b421f;
+  color: #f8e7b0;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding-right: 42px;
+}
+
+.auth-icon {
+  width: 58px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(50% 0%, 92% 22%, 82% 100%, 18% 100%, 8% 22%);
+  background: linear-gradient(180deg, #f8e7b0, #d9a441);
+  border: 2px solid #5a3518;
+  color: #3a2412;
+  font-weight: 900;
+  font-size: 1.35rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.22);
+}
+
+.auth-kicker {
+  margin: 0 0 2px;
+  color: #8b5a2b;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.auth-box h2 {
+  margin: 0;
+  font-weight: 900;
+  font-size: 1.75rem;
+  letter-spacing: 0.06em;
+  color: #3a2412;
+}
+
+.auth-lead {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-left: 5px solid #d9a441;
+  border-radius: 10px;
+  background: rgba(255, 248, 225, 0.82);
+  color: #5a3518;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 6px;
+  border: 2px solid #8b5a2b;
+  border-radius: 999px;
+  background: rgba(107, 66, 31, 0.12);
+}
+
+.auth-tab {
+  padding: 11px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #5a3518;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.auth-tab:hover {
+  transform: translateY(-1px);
+}
+
+.auth-tab.active {
+  background: linear-gradient(180deg, #6b421f, #3a2412);
+  color: #f8e7b0;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.22);
+}
+
+.auth-error {
+  min-height: 1.6em;
+  margin-bottom: 10px;
+  padding: 0 4px;
+  color: #b00020;
+  font-weight: 900;
+  text-align: center;
+}
+
+.auth-error:not(:empty) {
+  padding: 10px 12px;
+  border: 2px solid rgba(176, 0, 32, 0.3);
+  border-radius: 10px;
+  background: rgba(176, 0, 32, 0.08);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.auth-field label {
+  font-weight: 900;
+  color: #3a2412;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 2px solid #8b5a2b;
+  border-radius: 12px;
+  background: #fffdf3;
+  color: #2f2418;
+  font-weight: 700;
+  outline: none;
+  transition: box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.auth-field input::placeholder {
+  color: rgba(90, 53, 24, 0.55);
+}
+
+.auth-field input:focus {
+  border-color: #d9a441;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(217, 164, 65, 0.25);
+}
+
+.auth-submit-btn {
+  margin-top: 6px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6b421f, #3a2412);
+  color: #f8e7b0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+}
+
+.auth-submit-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.32);
+}
+
+.auth-note {
+  margin: 18px 0 0;
+  color: #6b421f;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+#navLoginBtn[data-authenticated="true"] {
+  color: #fff8e1 !important;
+  background: rgba(255, 248, 225, 0.16);
+  border-radius: 999px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.online-match-btn {
+  background: #2f5d50;
+  color: #fff8e1;
+}
+
+.online-match-btn:hover {
+  background: #1f4037;
+  color: #ffffff;
+}
+
+.waiting-text {
+  color: #b00020;
+  font-weight: bold;
+}
+
+@media (max-width: 576px) {
+  .auth-box {
+    padding: 28px 20px 22px;
+  }
+
+  .auth-header {
+    align-items: flex-start;
+  }
+
+  .auth-icon {
+    width: 48px;
+    height: 58px;
+    font-size: 1.1rem;
+  }
+
+  .auth-box h2 {
+    font-size: 1.45rem;
+  }
+
+  .auth-lead {
+    font-size: 0.92rem;
+  }
+}
+
+/* ==============================
+   ログイン・新規登録ページ
+============================== */
+.nav-user-name {
+  color: #f8e7b0 !important;
+  font-weight: bold;
+}
+
+.nav-logout-form {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.nav-logout-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  color: #f5deb3 !important;
+  font-weight: 600;
+}
+
+.nav-logout-btn:hover {
+  color: #ffffff !important;
+}
+
+.auth-page {
+  min-height: calc(100vh - 100px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+}
+
+.auth-page-card {
+  width: min(440px, 92vw);
+  padding: 36px 32px;
+  background: rgba(255, 248, 225, 0.95);
+  border: 4px solid #6b421f;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  text-align: center;
+}
+
+.auth-page-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: #4a2c14;
+  color: #f8e7b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+
+.auth-page-kicker {
+  margin: 0 0 4px;
+  color: #8b5a2b;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+}
+
+.auth-page-card h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #3a2412;
+}
+
+.auth-page-lead {
+  margin: 14px 0 24px;
+  color: #5a3518;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.auth-page-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.auth-page-form label {
+  font-weight: bold;
+  color: #3a2412;
+}
+
+.auth-page-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #8b5a2b;
+  border-radius: 10px;
+  background: #fffdf3;
+  font-size: 1rem;
+  outline: none;
+}
+
+.auth-page-form input:focus {
+  border-color: #d9a441;
+  box-shadow: 0 0 0 4px rgba(217, 164, 65, 0.22);
+}
+
+.auth-page-submit,
+.auth-page-secondary {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.auth-page-submit {
+  border: none;
+  background: #6b421f;
+  color: #f8e7b0;
+}
+
+.auth-page-submit:hover {
+  background: #3a2412;
+}
+
+.auth-page-secondary {
+  display: block;
+  border: 2px solid #6b421f;
+  background: #fff8e1;
+  color: #3a2412;
+}
+
+.auth-page-secondary:hover {
+  background: #d9a441;
+  color: #3a2412;
+}
+
+.auth-page-error,
+.auth-page-success {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.auth-page-error {
+  background: #ffe1df;
+  color: #9b1c1c;
+  border: 1px solid #e57373;
+}
+
+.auth-page-success {
+  background: #e6f4d7;
+  color: #2f6f1f;
+  border: 1px solid #8bc34a;
+}
+
+/* ==============================
+   ログアウト確認モーダル
+============================== */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 18, 8, 0.7);
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.confirm-modal.hidden {
+  display: none;
+}
+
+.confirm-box {
+  width: min(420px, 92vw);
+  padding: 32px 28px;
+  background: #fff8e1;
+  border: 4px solid #6b421f;
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.4);
+  text-align: center;
+  color: #3a2412;
+}
+
+.confirm-box h2 {
+  margin: 0 0 16px;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.confirm-box p {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+
+.confirm-actions button {
+  min-width: 130px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.confirm-cancel-btn {
+  border: 2px solid #6b421f;
+  background: #fff8e1;
+  color: #3a2412;
+}
+
+.confirm-cancel-btn:hover {
+  background: #d9a441;
+}
+
+.confirm-ok-btn {
+  border: none;
+  background: #6b421f;
+  color: #f8e7b0;
+}
+
+.confirm-ok-btn:hover {
+  background: #3a2412;
+}
+
+
+/* ==============================
+   ログアウト確認ポップアップ（固定表示・専用クラス）
+============================== */
+.logout-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  background: rgba(30, 18, 8, 0.68) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+}
+
+.logout-overlay.hidden {
+  display: none !important;
+}
+
+.logout-box {
+  width: min(420px, 92vw) !important;
+  padding: 32px 28px !important;
+  background: #fff8e1 !important;
+  border: 4px solid #6b421f !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.42) !important;
+  text-align: center !important;
+  color: #3a2412 !important;
+}
+
+.logout-title {
+  margin: 0 0 16px !important;
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+}
+
+.logout-message {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: bold !important;
+  line-height: 1.7 !important;
+}
+
+.logout-actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  margin-top: 26px !important;
+  flex-wrap: wrap !important;
+}
+
+.logout-actions button {
+  min-width: 130px !important;
+  padding: 10px 20px !important;
+  border-radius: 999px !important;
+  font-size: 1rem !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+}
+
+.logout-cancel-btn {
+  border: 2px solid #6b421f !important;
+  background: #fff8e1 !important;
+  color: #3a2412 !important;
+}
+
+.logout-cancel-btn:hover {
+  background: #d9a441 !important;
+}
+
+.logout-ok-btn {
+  border: none !important;
+  background: #6b421f !important;
+  color: #f8e7b0 !important;
+}
+
+.logout-ok-btn:hover {
+  background: #3a2412 !important;
+}
+
+/* ==============================
+   ランダムオンライン対戦 待機画面
+============================== */
+.match-wait-page {
+  min-height: calc(100vh - 90px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.match-wait-card {
+  width: min(620px, 92vw);
+  padding: 44px 36px;
+  background: rgba(255, 248, 225, 0.94);
+  border: 4px solid #6b421f;
+  border-radius: 24px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.3);
+  text-align: center;
+  color: #3a2412;
+}
+
+.match-wait-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: #4a2c14;
+  color: #f8e7b0;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+
+.match-wait-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+  color: #3a2412;
+}
+
+.match-wait-message {
+  font-weight: bold;
+  color: #5a3518;
+  margin-bottom: 24px;
+}
+
+.matching-loader {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 28px;
+}
+
+.matching-loader span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #6b421f;
+  animation: matchingBounce 1s infinite ease-in-out;
+}
+
+.matching-loader span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.matching-loader span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes matchingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+  40% { transform: translateY(-10px); opacity: 1; }
+}
+
+.match-wait-info {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  background: rgba(217, 164, 65, 0.28);
+  border: 2px solid rgba(107, 66, 31, 0.45);
+  font-weight: bold;
+}
+
+.match-cancel-btn {
+  min-width: 180px;
+  padding: 12px 28px;
+  border: 2px solid #6b421f;
+  border-radius: 999px;
+  background: #fff8e1;
+  color: #3a2412;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.match-cancel-btn:hover {
+  transform: translateY(-2px);
+  background: #d9a441;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+}
+
+/* ==============================
+   投了確認・成り確認モーダル中央表示 修正版
+   既存の .confirm-modal や .modal との競合を避けるため、
+   shogi.html の #confirmOverlay に限定して強制指定する。
+============================== */
+#confirmOverlay.overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(30, 18, 8, 0.68) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 24px !important;
+  z-index: 10000 !important;
+}
+
+#confirmOverlay.hidden {
+  display: none !important;
+}
+
+#confirmOverlay .confirm-modal {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+
+  width: min(460px, 92vw) !important;
+  height: auto !important;
+  min-height: 230px !important;
+  padding: 32px 28px !important;
+
+  background: #fff8e1 !important;
+  border: 4px solid #6b421f !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  color: #3a2412 !important;
+  text-align: center !important;
+  animation: confirmCenterFadeIn 0.22s ease !important;
+}
+
+#confirmOverlay .confirm-title {
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+  margin-bottom: 12px !important;
+  color: #3a2412 !important;
+}
+
+#confirmOverlay .confirm-message {
+  font-size: 1.05rem !important;
+  font-weight: bold !important;
+  line-height: 1.7 !important;
+  color: #5a3518 !important;
+  margin: 0 0 20px !important;
+}
+
+#confirmOverlay .result-actions {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-top: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+#confirmOverlay .result-actions button {
+  min-width: 130px !important;
+  padding: 10px 22px !important;
+  margin-top: 0 !important;
+  border-radius: 999px !important;
+  border: none !important;
+  font-size: 1rem !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+}
+
+#confirmOverlay #confirmCancelBtn {
+  background: #d9a441 !important;
+  color: #3a2412 !important;
+}
+
+#confirmOverlay #confirmCancelBtn:hover {
+  background: #b8822f !important;
+}
+
+#confirmOverlay #confirmOkBtn {
+  background: #6b421f !important;
+  color: #f8e7b0 !important;
+}
+
+#confirmOverlay #confirmOkBtn:hover {
+  background: #3a2412 !important;
+}
+
+@keyframes confirmCenterFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ===== 持ち時間表示 ===== */
+.timer-display {
+  display: inline-block;
+  margin: 4px 0 12px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  background: #fff8e1;
+  border: 2px solid #8b5a2b;
+  color: #3a2412;
+  font-weight: bold;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.timer-display.timer-warning {
+  background: #ffe0d6;
+  border-color: #b23b2e;
+  color: #8f1d12;
+}
+
+.time-select-area {
+  margin: 22px auto 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  color: #3a2412;
+}
+
+.time-limit-select {
+  width: min(260px, 80vw);
+  padding: 10px 14px;
+  border: 2px solid #6b421f;
+  border-radius: 10px;
+  background: #fff8e1;
+  color: #3a2412;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ===== 駒画像表示 ===== */
+#board td {
+  position: relative;
+  padding: 0;
+}
+
+.piece-visual {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#board .piece-img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  display: block;
+}
+
+.piece-img.rotated,
+.piece-fallback.rotated {
+  transform: rotate(180deg);
+}
+
+.piece-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 24px;
+  line-height: 1;
+  color: #2f2418;
+}
+
+.hand-piece {
+  position: relative;
+  padding: 4px;
+}
+
+.hand-piece .piece-visual {
+  min-height: 38px;
+}
+
+.hand-piece .piece-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  display: block;
+}
+
+.hand-piece .piece-fallback {
+  font-size: 18px;
+}
+
+.piece-count-badge {
+  position: absolute;
+  right: -10px;
+  bottom: -8px;
+  min-width: 24px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: #6b421f;
+  color: #f8e7b0;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.2;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+}
+
+/* ===== 持ち駒レイアウト調整：相手=盤面左上横 / 自分=盤面右下横 ===== */
+#container {
+  display: grid !important;
+  grid-template-columns: minmax(360px, 420px) 540px minmax(360px, 420px) !important;
+  grid-template-rows: 200px 140px 200px !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 16px 24px !important;
+}
+
+#container .handContainer:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
+  justify-self: end !important;
+  width: 420px !important;
+}
+
+#container #board {
+  grid-column: 2 !important;
+  grid-row: 1 / 4 !important;
+  justify-self: center !important;
+  align-self: center !important;
+}
+
+#container .handContainer:last-child {
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  align-self: end !important;
+  justify-self: start !important;
+  width: 420px !important;
+}
+
+.handContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.handLabel {
+  width: 100% !important;
+  margin-bottom: 6px !important;
+  padding: 6px 8px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.hand {
+  width: 100% !important;
+  height: 170px !important;
+  min-height: 170px !important;
+  max-height: 170px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+}
+
+.hand .hand-piece,
+.piece.hand-piece {
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px !important;
+  min-height: 54px !important;
+  flex: 0 0 54px !important;
+  box-sizing: border-box !important;
+}
+
+.hand-piece .piece-visual {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.hand-piece .piece-img {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.piece-count-badge {
+  right: -8px !important;
+  bottom: -6px !important;
+}
+
+@media (max-width: 900px) {
+  #container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    gap: 14px !important;
+  }
+
+  #container .handContainer:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+
+  #container #board {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  #container .handContainer:last-child {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+}
+
+/* =========================================================
+   横長持ち駒レイアウト最終調整
+   既存のレスポンシブ指定で上下配置にならないよう、最後に強制上書きする
+========================================================= */
+#game {
+  display: block !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding: 8px 0 18px !important;
+}
+
+#container {
+  display: grid !important;
+  grid-template-columns: 360px 450px 360px !important;
+  grid-template-rows: 190px 70px 190px !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 16px 24px !important;
+  width: max-content !important;
+  min-width: 1218px !important;
+  margin: 0 auto !important;
+}
+
+#container .handContainer:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
+  justify-self: end !important;
+  width: 360px !important;
+}
+
+#container #board {
+  grid-column: 2 !important;
+  grid-row: 1 / 4 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 450px !important;
+  height: 450px !important;
+}
+
+#container .handContainer:last-child {
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  align-self: end !important;
+  justify-self: start !important;
+  width: 360px !important;
+}
+
+.handContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.hand {
+  width: 100% !important;
+  height: 158px !important;
+  min-height: 158px !important;
+  max-height: 158px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+}
+
+.hand .hand-piece,
+.piece.hand-piece {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  min-height: 52px !important;
+  flex: 0 0 52px !important;
+  box-sizing: border-box !important;
+}
+
+.hand-piece .piece-img {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+
+/* ===== 900px以下では縦配置に切り替える ===== */
+@media (max-width: 900px) {
+  #container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 14px !important;
+  }
+
+  #container .handContainer:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+
+  #container #board {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    justify-self: center !important;
+  }
+
+  #container .handContainer:last-child {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+}
+
+
+/* ===== オンライン部屋作成：部屋IDコピー欄 ===== */
+.room-id-panel {
+  width: min(460px, 100%);
+  margin: 0 auto 22px;
+  padding: 16px 18px;
+  border: 2px solid rgba(107, 66, 31, 0.55);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.room-id-label {
+  margin-bottom: 8px;
+  color: #5a3518;
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.room-id-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.room-id-text {
+  min-width: 170px;
+  padding: 8px 16px;
+  border: 2px solid #6b421f;
+  border-radius: 10px;
+  background: #fff8e1;
+  color: #3a2412;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  user-select: all;
+}
+
+.room-copy-btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #6b421f;
+  color: #f8e7b0;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.room-copy-btn:hover {
+  transform: translateY(-2px);
+  background: #3a2412;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+}
+
+.room-copy-message {
+  min-height: 1.4em;
+  margin-top: 8px;
+  color: #6b421f;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+/* =========================================================
+   盤面全体の横スクロール防止・持ち駒横配置の再調整
+   900pxを超える幅では左右配置を維持しつつ、画面幅に合わせて
+   持ち駒欄だけを縮小する。900px以下では縦配置に切り替える。
+========================================================= */
+html,
+body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#game {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  padding: 8px 12px 18px !important;
+  box-sizing: border-box !important;
+}
+
+#container {
+  display: grid !important;
+  grid-template-columns:
+    minmax(190px, clamp(190px, calc((100vw - 498px) / 2), 360px))
+    450px
+    minmax(190px, clamp(190px, calc((100vw - 498px) / 2), 360px)) !important;
+  grid-template-rows: 190px 70px 190px !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 16px 24px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 1218px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+#container .handContainer:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#container #board {
+  grid-column: 2 !important;
+  grid-row: 1 / 4 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 450px !important;
+  height: 450px !important;
+  min-width: 450px !important;
+  max-width: 450px !important;
+}
+
+#container #board td {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+#container .handContainer:last-child {
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  align-self: end !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.handContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  min-width: 0 !important;
+}
+
+.hand {
+  width: 100% !important;
+  height: 158px !important;
+  min-height: 158px !important;
+  max-height: 158px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+  }
+
+  #game {
+    overflow-x: hidden !important;
+    padding: 8px 8px 18px !important;
+  }
+
+  #container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 14px !important;
+  }
+
+  #container .handContainer:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+
+  #container #board {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    justify-self: center !important;
+    width: min(450px, 94vw) !important;
+    height: min(450px, 94vw) !important;
+    min-width: 0 !important;
+    max-width: 450px !important;
+  }
+
+  #container #board td {
+    width: calc(min(450px, 94vw) / 9) !important;
+    height: calc(min(450px, 94vw) / 9) !important;
+  }
+
+  #container .handContainer:last-child {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+}
+
+/* =========================================================
+   盤面540px固定・ページ横スクロール防止 最終調整
+   - 900px超: 持ち駒を左右に配置し、盤面は540px固定
+   - 900px以下: 持ち駒を上下配置にし、盤面は画面幅に合わせる
+========================================================= */
+html,
+body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#game {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  box-sizing: border-box !important;
+}
+
+#container {
+  display: grid !important;
+  grid-template-columns:
+    minmax(140px, clamp(140px, calc((100vw - 588px) / 2), 330px))
+    540px
+    minmax(140px, clamp(140px, calc((100vw - 588px) / 2), 330px)) !important;
+  grid-template-rows: 190px 160px 190px !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 16px 24px !important;
+  width: 100% !important;
+  max-width: 1248px !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+#container #board {
+  grid-column: 2 !important;
+  grid-row: 1 / 4 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 540px !important;
+  height: 540px !important;
+  min-width: 540px !important;
+  max-width: 540px !important;
+  table-layout: fixed !important;
+}
+
+#container #board td {
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  box-sizing: border-box !important;
+}
+
+#container .handContainer:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#container .handContainer:last-child {
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  align-self: end !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.hand {
+  width: 100% !important;
+  height: 170px !important;
+  min-height: 170px !important;
+  max-height: 170px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+@media (max-width: 900px) {
+  html,
+  body,
+  #game {
+    overflow-x: hidden !important;
+  }
+
+  #container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 14px !important;
+  }
+
+  #container .handContainer:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+
+  #container #board {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+    height: min(540px, 94vw) !important;
+    min-width: 0 !important;
+    max-width: 540px !important;
+  }
+
+  #container #board td {
+    width: calc(min(540px, 94vw) / 9) !important;
+    height: calc(min(540px, 94vw) / 9) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  #container .handContainer:last-child {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    justify-self: center !important;
+    width: min(540px, 94vw) !important;
+  }
+}
+
+/* =========================================================
+   スマホ対応 最終上書き
+   - PC: 盤面540px固定、持ち駒は左右
+   - タブレット/スマホ: 盤面を画面幅に合わせて縮小、持ち駒は上下
+   - ページ全体の横スクロールを禁止
+========================================================= */
+html,
+body {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+body {
+  -webkit-text-size-adjust: 100%;
+}
+
+.main-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+#game {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* PC・広い画面 */
+#container {
+  display: grid !important;
+  grid-template-columns: minmax(160px, 1fr) 540px minmax(160px, 1fr) !important;
+  grid-template-rows: 190px 160px 190px !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 16px 20px !important;
+  width: 100% !important;
+  max-width: 1240px !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+#container #board {
+  grid-column: 2 !important;
+  grid-row: 1 / 4 !important;
+  width: 540px !important;
+  height: 540px !important;
+  min-width: 540px !important;
+  max-width: 540px !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  justify-self: center !important;
+  align-self: center !important;
+}
+
+#container #board td {
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#container .handContainer:first-child {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  align-self: start !important;
+  justify-self: stretch !important;
+}
+
+#container .handContainer:last-child {
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  align-self: end !important;
+  justify-self: stretch !important;
+}
+
+.handContainer {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.hand {
+  width: 100% !important;
+  height: 170px !important;
+  min-height: 170px !important;
+  max-height: 170px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+}
+
+/* タブレット以下：盤面を縮小し、持ち駒を上下に配置 */
+@media (max-width: 900px) {
+  .main-content {
+    padding: 14px 6px 28px !important;
+  }
+
+  #turnDisplay,
+  .timer-display,
+  .match-info {
+    max-width: 94vw !important;
+    font-size: 0.95rem !important;
+    padding: 7px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .surrender-btn {
+    margin-bottom: 12px !important;
+    padding: 8px 20px !important;
+    font-size: 0.95rem !important;
+  }
+
+  #container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+    justify-items: center !important;
+    align-items: center !important;
+  }
+
+  #container .handContainer:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: min(540px, 96vw) !important;
+    max-width: 96vw !important;
+    justify-self: center !important;
+  }
+
+  #container #board {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: min(540px, 96vw) !important;
+    height: min(540px, 96vw) !important;
+    min-width: 0 !important;
+    max-width: 96vw !important;
+    justify-self: center !important;
+  }
+
+  #container #board td {
+    width: calc(min(540px, 96vw) / 9) !important;
+    height: calc(min(540px, 96vw) / 9) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  #container .handContainer:last-child {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    width: min(540px, 96vw) !important;
+    max-width: 96vw !important;
+    justify-self: center !important;
+  }
+
+  .handLabel {
+    font-size: 0.9rem !important;
+    padding: 5px 8px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .hand {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  .hand .hand-piece,
+  .piece.hand-piece {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    flex: 0 0 44px !important;
+  }
+
+  .hand-piece .piece-img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  #board .piece-img {
+    width: 88% !important;
+    height: 88% !important;
+  }
+
+  .piece-count-badge {
+    right: -6px !important;
+    bottom: -5px !important;
+    min-width: 20px !important;
+    font-size: 10px !important;
+  }
+}
+
+/* 小さいスマホ */
+@media (max-width: 480px) {
+  .navbar-brand.shogi-brand {
+    font-size: 1.05rem !important;
+  }
+
+  .main-content {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 8px !important;
+  }
+
+  #container #board {
+    width: min(540px, 98vw) !important;
+    height: min(540px, 98vw) !important;
+    max-width: 98vw !important;
+    border-width: 3px !important;
+  }
+
+  #container #board td {
+    width: calc(min(540px, 98vw) / 9) !important;
+    height: calc(min(540px, 98vw) / 9) !important;
+  }
+
+  #container .handContainer:first-child,
+  #container .handContainer:last-child {
+    width: min(540px, 98vw) !important;
+    max-width: 98vw !important;
+  }
+
+  .hand {
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
+    padding: 6px !important;
+    gap: 5px !important;
+  }
+
+  .hand .hand-piece,
+  .piece.hand-piece {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex: 0 0 40px !important;
+  }
+
+  .hand-piece .piece-img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .modal,
+  #confirmOverlay .confirm-modal,
+  .logout-box,
+  .rule-box,
+  .side-select-box {
+    width: 92vw !important;
+    max-width: 92vw !important;
+    height: auto !important;
+    max-height: 86vh !important;
+    padding: 22px 16px !important;
+    font-size: 1rem !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .result-actions,
+  #confirmOverlay .result-actions,
+  .logout-actions,
+  .side-select-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .result-actions button,
+  #confirmOverlay .result-actions button,
+  .logout-actions button,
+  .side-select-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .title-card,
+  .auth-page-card,
+  .match-wait-card {
+    width: 94vw !important;
+    padding: 28px 18px !important;
+    box-sizing: border-box !important;
+  }
+
+  .join-room-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .join-room-row input,
+  .join-room-row button {
+    width: 100% !important;
+  }
+}
+
+
+/* =========================================================
+   iOS / iPadOS Safari 対応
+   - 100vh問題、Safe Area、タップ時の青ハイライト、画像ドラッグ、入力時ズームを抑制
+========================================================= */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+  min-height: 100%;
+  min-height: 100svh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden !important;
+}
+
+body {
+  min-height: 100%;
+  min-height: 100svh;
+  padding-left: max(0px, var(--safe-left));
+  padding-right: max(0px, var(--safe-right));
+  padding-bottom: max(0px, var(--safe-bottom));
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-x: none;
+  overflow-x: hidden !important;
+}
+
+#board,
+#board td,
+.piece,
+.piece-visual,
+.piece-img,
+.piece-fallback,
+.hand,
+.handContainer {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.piece-img,
+#board img,
+.hand img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+input,
+select,
+textarea,
+button {
+  font-size: 16px !important; /* iOS Safariの入力時自動ズーム対策 */
+}
+
+.rule-box,
+.modal,
+.logout-box,
+#confirmOverlay .confirm-modal,
+.side-select-box,
+.match-wait-card,
+.auth-page-card,
+.hand {
+  -webkit-overflow-scrolling: touch;
+}
+
+.navbar {
+  padding-top: max(0.5rem, var(--safe-top));
+}
+
+/* iPhone縦向き想定 */
+@media (max-width: 430px) {
+  body {
+    min-height: 100dvh;
+  }
+
+  .main-content {
+    padding-top: 10px !important;
+    padding-bottom: max(18px, calc(18px + var(--safe-bottom))) !important;
+  }
+
+  #game {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  #container #board {
+    width: min(540px, 96vw) !important;
+    height: min(540px, 96vw) !important;
+    max-width: 96vw !important;
+  }
+
+  #container #board td {
+    width: calc(min(540px, 96vw) / 9) !important;
+    height: calc(min(540px, 96vw) / 9) !important;
+  }
+
+  #container .handContainer:first-child,
+  #container .handContainer:last-child {
+    width: min(540px, 96vw) !important;
+    max-width: 96vw !important;
+  }
+
+  .hand {
+    height: 84px !important;
+    min-height: 84px !important;
+    max-height: 84px !important;
+  }
+
+  #turnDisplay,
+  .timer-display,
+  .match-info {
+    max-width: 96vw !important;
+  }
+}
+
+/* iPhone SEなど極小幅 */
+@media (max-width: 375px) {
+  .hand .hand-piece,
+  .piece.hand-piece {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    flex: 0 0 36px !important;
+  }
+
+  .hand-piece .piece-img {
+    width: 29px !important;
+    height: 29px !important;
+  }
+
+  .piece-count-badge {
+    min-width: 18px !important;
+    font-size: 9px !important;
+  }
+}
+
+/* iPadで盤面と持ち駒が窮屈な場合は上下配置に寄せる */
+@media (min-width: 431px) and (max-width: 900px) {
+  #container #board {
+    width: min(540px, 92vw) !important;
+    height: min(540px, 92vw) !important;
+  }
+
+  #container #board td {
+    width: calc(min(540px, 92vw) / 9) !important;
+    height: calc(min(540px, 92vw) / 9) !important;
+  }
+
+  #container .handContainer:first-child,
+  #container .handContainer:last-child {
+    width: min(540px, 92vw) !important;
+  }
+}
+
+/* =========================================================
+   モバイル用ナビゲーションメニュー・認証フォーム安定化
+   - モバイルではタイトル/ログイン/ルール説明をメニュー内に表示
+   - iOS/Androidでログイン/登録フォームが押しやすいよう調整
+========================================================= */
+.mobile-menu-toggle,
+.mobile-nav-overlay {
+  display: none;
+}
+
+.mobile-menu-toggle {
+  width: 44px;
+  height: 40px;
+  border: 2px solid rgba(248, 231, 176, 0.75);
+  border-radius: 10px;
+  background: rgba(255, 248, 225, 0.16);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  margin-left: auto;
+}
+
+.mobile-menu-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 999px;
+  background: #f8e7b0;
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+}
+
+.mobile-nav-overlay.hidden {
+  display: none !important;
+}
+
+.mobile-nav-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 18, 8, 0.68);
+}
+
+.mobile-nav-panel {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  width: min(320px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff8e1;
+  border: 4px solid #6b421f;
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.42);
+  color: #3a2412;
+}
+
+.mobile-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  border-bottom: 2px solid rgba(107, 66, 31, 0.28);
+}
+
+.mobile-nav-title {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #3a2412;
+}
+
+.mobile-nav-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #6b421f;
+  color: #f8e7b0;
+  font-size: 26px !important;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 20px;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid #6b421f;
+  border-radius: 999px;
+  background: #fffdf3;
+  color: #3a2412 !important;
+  font-weight: 900;
+  text-decoration: none;
+  text-align: center;
+}
+
+.mobile-nav-link:active,
+.mobile-nav-link:hover {
+  background: #d9a441;
+  color: #3a2412 !important;
+}
+
+.mobile-nav-button {
+  cursor: pointer;
+}
+
+.mobile-nav-user {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(217, 164, 65, 0.28);
+  border: 2px solid rgba(107, 66, 31, 0.35);
+  font-weight: bold;
+  text-align: center;
+}
+
+body.mobile-menu-open {
+  overflow: hidden !important;
+}
+
+@media (max-width: 767px) {
+  .shogi-navbar .container-fluid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .desktop-nav,
+  .navbar-collapse.desktop-nav {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex !important;
+  }
+
+  .mobile-nav-overlay:not(.hidden) {
+    display: block !important;
+  }
+
+  .navbar-brand.shogi-brand {
+    max-width: calc(100vw - 88px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex !important;
+  }
+
+  .mobile-menu-toggle,
+  .mobile-nav-overlay {
+    display: none !important;
+  }
+}
+
+/* ===== ログイン/登録ページ：モバイル操作改善 ===== */
+.auth-page {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-page-form input {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 48px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.auth-page-submit,
+.auth-page-secondary {
+  min-height: 48px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+.auth-page-form button[type="submit"] {
+  touch-action: manipulation;
+}
+
+@media (max-width: 576px) {
+  .auth-page {
+    align-items: flex-start !important;
+    padding: max(18px, env(safe-area-inset-top, 0px)) 12px 28px !important;
+    min-height: calc(100dvh - 72px) !important;
+  }
+
+  .auth-page-card {
+    width: min(440px, 96vw) !important;
+    padding: 28px 20px !important;
+    border-width: 3px !important;
+  }
+
+  .auth-page-card h1 {
+    font-size: 1.7rem !important;
+  }
+
+  .auth-page-lead {
+    font-size: 0.95rem !important;
+    margin-bottom: 18px !important;
+  }
+
+  .auth-page-form {
+    gap: 9px !important;
+  }
+
+  .auth-page-form input {
+    font-size: 16px !important;
+    padding: 13px 14px !important;
+  }
+
+  .auth-page-submit,
+  .auth-page-secondary {
+    font-size: 16px !important;
+    padding: 13px 16px !important;
+  }
+}
+
+
+/* =========================================================
+   ログイン/新規登録ボタンのタップ安定化
+   - モバイルSafariでボタンが反応しないケースを防ぐ
+========================================================= */
+.auth-page,
+.auth-page-card,
+.auth-page-form,
+.auth-page-form input,
+.auth-page-submit,
+.auth-page-secondary {
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: auto !important;
+}
+
+.auth-page-submit {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 52px !important;
+  border: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+}
+
+.auth-page-submit:disabled {
+  opacity: 0.72 !important;
+  cursor: wait !important;
+}
+
+.auth-page-form input {
+  min-height: 52px !important;
+}
+
+
+/* ===== 認証フォーム補足 ===== */
+.auth-input-hint {
+  margin: -4px 0 10px;
+  font-size: 0.85rem;
+  color: #6b421f;
+  text-align: left;
+}
+
+/* =========================================================
+   対戦設定モーダル：整理版
+   - 先手/後手/ランダムは「選択ボタン」
+   - 閉じる/開始/部屋作成は同一UI
+   - 既存CSSの重複を避けるため、このセクションで最終定義
+========================================================= */
+#sideSelectOverlay .side-select-buttons {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex-wrap: wrap !important;
+  margin: 22px 0 !important;
+}
+
+#sideSelectOverlay .side-select-btn {
+  min-width: 128px !important;
+  padding: 12px 24px !important;
+  border: 3px solid #6b421f !important;
+  border-radius: 999px !important;
+  background: #6b421f !important;
+  color: #f8e7b0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.18) !important;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#sideSelectOverlay .side-select-btn:hover {
+  background: #3a2412 !important;
+  color: #ffffff !important;
+  border-color: #3a2412 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25) !important;
+}
+
+#sideSelectOverlay .side-select-btn.selected {
+  background: #1565c0 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  outline: 4px solid #ffcc33 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 6px rgba(21,101,192,0.20), 0 10px 22px rgba(0,0,0,0.28) !important;
+  transform: translateY(-2px) !important;
+}
+
+#sideSelectOverlay .side-select-actions {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-top: 24px !important;
+  flex-wrap: wrap !important;
+}
+
+#sideSelectOverlay .side-action-btn,
+#sideSelectOverlay .side-close-btn,
+#sideSelectOverlay .side-confirm-btn {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-width: 132px !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 10px 32px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #6b421f !important;
+  color: #f8e7b0 !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.18) !important;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#sideSelectOverlay .side-action-btn:hover,
+#sideSelectOverlay .side-close-btn:hover,
+#sideSelectOverlay .side-confirm-btn:hover {
+  background: #3a2412 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25) !important;
+}
+
+@media (max-width: 576px) {
+  #sideSelectOverlay .side-select-btn,
+  #sideSelectOverlay .side-action-btn,
+  #sideSelectOverlay .side-close-btn,
+  #sideSelectOverlay .side-confirm-btn {
+    width: min(220px, 100%) !important;
+  }
+
+  #sideSelectOverlay .side-select-actions {
+    gap: 10px !important;
+  }
+}
+
+/* ===== タップ操作の安定化（整理時に必要な共通指定を再定義） ===== */
+button,
+a,
+#board td,
+.piece,
+.title-btn,
+.side-select-btn,
+.surrender-btn,
+.modal button,
+.rule-modal button,
+.logout-overlay button,
+#confirmOverlay button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   スタート画面
+========================================================= */
+.start-page {
+  min-height: calc(100svh - 96px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  box-sizing: border-box;
+}
+
+.start-card {
+  width: min(760px, 92vw);
+  padding: clamp(0px, 7vw, 20px) clamp(22px, 5vw, 56px);
+  border: 4px solid #6b421f;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 247, 215, 0.92), rgba(255, 248, 225, 0.78) 52%, rgba(210, 170, 90, 0.58)),
+    linear-gradient(135deg, rgba(58, 36, 18, 0.14), rgba(255, 255, 255, 0.2));
+  box-shadow: 0 24px 54px rgba(45, 27, 10, 0.34);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.start-card::before,
+.start-card::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border: 2px solid rgba(107, 66, 31, 0.14);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.start-card::before {
+  top: -180px;
+  left: -140px;
+}
+
+.start-card::after {
+  right: -150px;
+  bottom: -190px;
+}
+
+.startrogo {
+  width: 500px;
+}
+
+.start-title {
+  margin: 0;
+  color: #3a2412;
+  font-size: clamp(2.8rem, 9vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0 rgba(217, 164, 65, 0.72);
+}
+
+.start-catch {
+  margin: 20px auto 34px;
+  color: #5a3518;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  font-weight: 800;
+  line-height: 1.8;
+}
+
+.start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  min-height: 58px;
+  padding: 14px 36px;
+  border-radius: 999px;
+  background: #6b421f;
+  color: #f8e7b0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.start-button:hover {
+  background: #3a2412;
+  color: #ffffff;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+}
+
+@media (max-width: 480px) {
+  .start-page {
+    padding: 22px 12px;
+    min-height: calc(100svh - 72px);
+  }
+
+  .start-card {
+    width: 94vw;
+    padding: 30px 18px;
+    border-radius: 22px;
+  }
+
+  .startrogo {
+  width: 300px;
+  }
+
+  .start-button {
+    width: min(280px, 82vw);
+    min-width: 0;
+  }
+}

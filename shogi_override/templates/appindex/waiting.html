@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="match-wait-page">
+  <div class="match-wait-card">
+    <div class="match-wait-badge">{{ wait_badge|default:"オンライン対戦" }}</div>
+    <h1 id="matchingStatus" class="match-wait-title">{{ wait_title|default:"マッチング中です" }}</h1>
+    <p id="matchingMessage" class="match-wait-message">
+      {{ wait_message|default:"対戦相手を探しています。しばらくお待ちください。" }}
+    </p>
+
+    <div class="matching-loader" id="matchingLoader">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    {% if wait_room_id %}
+    <div class="room-id-panel" aria-label="部屋ID">
+      <div class="room-id-label">部屋ID</div>
+      <div class="room-id-row">
+        <code id="roomIdText" class="room-id-text">{{ wait_room_id }}</code>
+        <button id="copyRoomIdBtn" class="room-copy-btn" type="button">
+          コピー
+        </button>
+      </div>
+      <div id="copyRoomIdMessage" class="room-copy-message" aria-live="polite"></div>
+    </div>
+    {% endif %}
+
+    <div class="match-wait-info">
+      <div>{{ wait_info|default:"対戦相手が見つかり次第、対局画面へ移動します。" }}</div>
+    </div>
+
+    <button id="cancelMatchBtn" class="match-cancel-btn" type="button">
+      キャンセル
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const statusEl = document.getElementById("matchingStatus");
+    const messageEl = document.getElementById("matchingMessage");
+    const loaderEl = document.getElementById("matchingLoader");
+    const cancelBtn = document.getElementById("cancelMatchBtn");
+    const roomIdText = document.getElementById("roomIdText");
+    const copyRoomIdBtn = document.getElementById("copyRoomIdBtn");
+    const copyRoomIdMessage = document.getElementById("copyRoomIdMessage");
+
+    const statusUrl = "{{ status_url|default:'/online/match/status' }}";
+    const cancelUrl = "{{ cancel_url|default:'/online/match/cancel' }}";
+    const loginUrl = "{% url 'login_page' %}";
+    const titleUrl = "{% url 'title' %}";
+
+    let matched = false;
+    let pollTimer = null;
+    let redirectTimer = null;
+
+    function showMatched(redirectUrl) {
+      if (matched) return;
+      matched = true;
+
+      statusEl.textContent = "マッチングしました。";
+      messageEl.textContent = "2秒後に対局画面へ移動します。";
+      if (loaderEl) loaderEl.style.display = "none";
+      if (cancelBtn) cancelBtn.style.display = "none";
+
+      if (pollTimer) clearInterval(pollTimer);
+      redirectTimer = setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 2000);
+    }
+
+    async function checkMatchStatus() {
+      try {
+        const res = await fetch(statusUrl);
+        const data = await res.json();
+
+        if (res.status === 401 || data.login_required) {
+          window.location.href = loginUrl;
+          return;
+        }
+
+        if (data.ok && data.matched) {
+          showMatched(data.redirect);
+        }
+      } catch (error) {
+        console.error("waiting status error", error);
+      }
+    }
+
+    async function copyRoomId() {
+      if (!roomIdText || !copyRoomIdBtn) return;
+
+      const roomId = roomIdText.textContent.trim();
+      if (!roomId) return;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(roomId);
+        } else {
+          const tempInput = document.createElement("input");
+          tempInput.value = roomId;
+          tempInput.setAttribute("readonly", "readonly");
+          tempInput.style.position = "absolute";
+          tempInput.style.left = "-9999px";
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand("copy");
+          document.body.removeChild(tempInput);
+        }
+
+        if (copyRoomIdMessage) {
+          copyRoomIdMessage.textContent = "コピーしました";
+          setTimeout(() => {
+            copyRoomIdMessage.textContent = "";
+          }, 1800);
+        }
+      } catch (error) {
+        console.error("copy room id error", error);
+        if (copyRoomIdMessage) {
+          copyRoomIdMessage.textContent = "コピーできませんでした";
+        }
+      }
+    }
+
+    async function cancelMatching() {
+      if (matched) return;
+
+      try {
+        await fetch(cancelUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (error) {
+        console.error("cancel waiting error", error);
+      } finally {
+        if (pollTimer) clearInterval(pollTimer);
+        if (redirectTimer) clearTimeout(redirectTimer);
+        window.location.href = titleUrl;
+      }
+    }
+
+    if (copyRoomIdBtn) {
+      copyRoomIdBtn.addEventListener("click", copyRoomId);
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", cancelMatching);
+    }
+
+    checkMatchStatus();
+    pollTimer = setInterval(checkMatchStatus, 1200);
+  });
+</script>
+{% endblock %}

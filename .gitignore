@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+env/
+*.env
+
+# Node.js
+
+# Django specific
+*.sqlite3
+db.sqlite3
+/media
+/staticfiles
+*.log
+
+# PyCharm / VSCode
+.idea/
+.vscode/
+
+
+# Migrations (you may want to version control them in some cases)
+# Uncomment the next line if you do NOT want to track any migration files
+**/migrations/*.py
+
+# System files
+.DS_Store

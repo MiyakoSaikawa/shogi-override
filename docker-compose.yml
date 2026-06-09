@@ -1,0 +1,45 @@
+services:
+  shogi-override:
+    container_name: shogi-override
+    build:
+      context: .
+      dockerfile: ./containers/django/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+    volumes:
+      - ./shogi_override:/code
+      - shogi_static:/code/staticfiles
+      - shogi_media:/code/media
+    expose:
+      - "8000"
+    command: /usr/local/bin/entrypoint.sh
+    depends_on:
+      - db
+    networks:
+      - webapp_network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    container_name: webapp_db
+    env_file:
+      - .env
+    volumes:
+      - shogi_postgres_data:/var/lib/postgresql/data
+    networks:
+      - webapp_network
+    restart: unless-stopped
+
+volumes:
+  shogi_static:
+    name: shogi_static
+  shogi_media:
+    name: shogi_media
+  shogi_postgres_data:
+    name: shogi_postgres_data
+
+networks:
+  webapp_network:
+    external: true

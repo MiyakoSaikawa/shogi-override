@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-page">
+  <section class="auth-page-card">
+    <div class="auth-page-icon">将</div>
+    <p class="auth-page-kicker">Online Match</p>
+    <h1>ログイン</h1>
+    <p class="auth-page-lead">オンライン対戦を利用するにはログインしてください。</p>
+
+    {% if success %}
+      <div class="auth-page-success">{{ success }}</div>
+    {% endif %}
+
+    {% if error %}
+      <div class="auth-page-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login_page' %}" class="auth-page-form" id="loginForm" autocomplete="on">
+      {% csrf_token %}
+
+      <label for="username">ユーザー名</label>
+      <input id="username" name="username" type="text" value="{{ username|default:'' }}" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" required>
+
+      <label for="password">パスワード</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+      <button type="submit" class="auth-page-submit" id="loginSubmitBtn">ログイン</button>
+    </form>
+
+    <a href="{% url 'register_page' %}" class="auth-page-secondary">新規登録</a>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById("loginForm");
+    const button = document.getElementById("loginSubmitBtn");
+    if (!form || !button) return;
+
+    let submitting = false;
+
+    function submitAuthForm(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      if (submitting) return;
+
+      if (typeof form.reportValidity === "function" && !form.reportValidity()) {
+        return;
+      }
+
+      submitting = true;
+      button.disabled = true;
+      button.textContent = "ログイン中...";
+
+      HTMLFormElement.prototype.submit.call(form);
+    }
+
+    button.addEventListener("click", submitAuthForm);
+    button.addEventListener("touchend", submitAuthForm, { passive: false });
+  })();
+</script>
+{% endblock %}
